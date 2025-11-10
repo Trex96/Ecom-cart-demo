@@ -15,6 +15,18 @@
       "dest": "https://ecom-cart-demo.vercel.app/api/$1"
     },
     {
+      "src": "/assets/(.*)",
+      "headers": {
+        "cache-control": "public, immutable, max-age=31536000"
+      }
+    },
+    {
+      "src": "/(.*)\\.(.*)",
+      "headers": {
+        "cache-control": "public, immutable, max-age=31536000"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
