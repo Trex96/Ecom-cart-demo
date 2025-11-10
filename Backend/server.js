@@ -71,5 +71,13 @@ app.use((req, res, next) => {
   }
 });
 
+// Add a specific route to test if the server is working
+app.get('/api/test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API test endpoint is working'
+  });
+});
+
 // Vercel serverless function export
 module.exports = app;

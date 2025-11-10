@@ -20,13 +20,21 @@
       "dest": "server.js"
     },
     {
+      "src": "/api/products/external",
+      "dest": "server.js"
+    },
+    {
+      "src": "/api/products/external/.*",
+      "dest": "server.js"
+    },
+    {
       "src": "/api/cart",
       "methods": ["GET", "POST"],
       "dest": "server.js"
     },
     {
       "src": "/api/cart/.*",
-      "methods": ["PUT", "DELETE"],
+      "methods": ["GET", "PUT", "DELETE"],
       "dest": "server.js"
     },
     {
@@ -37,6 +45,14 @@
     {
       "src": "/api/checkout/.*",
       "methods": ["GET"],
+      "dest": "server.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/(.*)",
       "dest": "server.js"
     }
   ]
