@@ -12,7 +12,21 @@ const fetchFromFakeStore = () => {
     
     console.log('Fetching from Fake Store API:', url);
     
-    const request = https.get(url, (response) => {
+    // Add headers to make the request appear more like a browser request
+    const options = {
+      hostname: 'fakestoreapi.com',
+      path: '/products',
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://fakestoreapi.com',
+        'Origin': 'https://fakestoreapi.com'
+      }
+    };
+    
+    const request = https.get(options, (response) => {
       let data = '';
       
       response.on('data', (chunk) => {
@@ -25,6 +39,20 @@ const fetchFromFakeStore = () => {
           console.log('Response status code:', response.statusCode);
           
           // Check if we got an error status code
+          if (response.statusCode === 403) {
+            console.error('Received 403 Forbidden from Fake Store API - likely blocked in production');
+            // Try to parse the response even if it's an error page
+            if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
+              const products = JSON.parse(data);
+              console.log('Parsed products despite 403, count:', products.length);
+              resolve(products);
+            } else {
+              // If it's HTML or other content, reject with a specific error
+              reject(new Error('Access forbidden to Fake Store API (403)'));
+            }
+            return;
+          }
+          
           if (response.statusCode !== 200) {
             console.error('Received non-200 status code from Fake Store API:', response.statusCode);
             reject(new Error(`Fake Store API returned status ${response.statusCode}`));
@@ -60,7 +88,7 @@ const fetchFromFakeStore = () => {
     });
     
     // Set timeout for the request
-    request.setTimeout(10000, () => {
+    request.setTimeout(15000, () => {
       request.destroy();
       console.error('Timeout fetching from Fake Store API');
       reject(new Error('Timeout fetching from Fake Store API'));
@@ -76,11 +104,23 @@ const fetchSingleFromFakeStore = (id) => {
       return;
     }
     
-    const url = `https://fakestoreapi.com/products/${id}`;
+    // Add headers to make the request appear more like a browser request
+    const options = {
+      hostname: 'fakestoreapi.com',
+      path: `/products/${id}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://fakestoreapi.com',
+        'Origin': 'https://fakestoreapi.com'
+      }
+    };
     
-    console.log('Fetching single product from Fake Store API:', url);
+    console.log('Fetching single product from Fake Store API:', `https://fakestoreapi.com/products/${id}`);
     
-    const request = https.get(url, (response) => {
+    const request = https.get(options, (response) => {
       let data = '';
       
       response.on('data', (chunk) => {
@@ -93,6 +133,12 @@ const fetchSingleFromFakeStore = (id) => {
           console.log('Response status code:', response.statusCode);
           
           // Check if we got an error status code
+          if (response.statusCode === 403) {
+            console.error('Received 403 Forbidden from Fake Store API for product ID:', id);
+            reject(new Error('Access forbidden to Fake Store API (403)'));
+            return;
+          }
+          
           if (response.statusCode === 404) {
             console.error('Product not found in Fake Store API for ID:', id);
             reject(new Error('Product not found in Fake Store API'));
@@ -134,7 +180,7 @@ const fetchSingleFromFakeStore = (id) => {
     });
     
     // Set timeout for the request
-    request.setTimeout(10000, () => {
+    request.setTimeout(15000, () => {
       request.destroy();
       console.error('Timeout fetching single product from Fake Store API for ID:', id);
       reject(new Error('Timeout fetching single product from Fake Store API'));

@@ -23,7 +23,8 @@ const getExternalProducts = asyncHandler(async (req, res) => {
     res.status(200).json({
       success: true,
       count: 0,
-      data: []
+      data: [],
+      message: 'External API temporarily unavailable'
     });
   }
 });
@@ -73,6 +74,12 @@ const getExternalProductById = asyncHandler(async (req, res) => {
         success: false,
         error: 'External API unavailable',
         message: 'The external product API is currently returning invalid data'
+      });
+    } else if (error.message.includes('403')) {
+      res.status(503).json({
+        success: false,
+        error: 'External API access forbidden',
+        message: 'Access to the external product API is currently blocked'
       });
     } else if (error.message.includes('Network')) {
       res.status(502).json({
