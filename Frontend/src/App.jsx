@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { ToastContainer } from 'react-toastify';
@@ -10,13 +10,12 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import NotFoundPage from './pages/NotFoundPage';
-function App() {
 
+function App() {
   return (
-    <Router>
+    <Router basename="/">
       <CartProvider>
         <div className="app">
-          
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
