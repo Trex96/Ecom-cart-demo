@@ -20,10 +20,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
-              <Route path="products" element={<ProductsPage />} />
-              <Route path="cart" element={<CartPage />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

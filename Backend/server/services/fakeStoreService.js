@@ -1,197 +1,135 @@
-const https = require('https');
+const axios = require('axios');
 
 
 let cachedProducts = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Sample products to use when external API is unavailable
+const sampleProducts = [
+  {
+    id: 1,
+    title: "Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops",
+    price: 109.95,
+    description: "Your perfect pack for everyday use and walks in the forest. Stash your laptop (up to 15 inches) in the padded sleeve, your everyday",
+    category: "men's clothing",
+    image: "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_t.png"
+  },
+  {
+    id: 2,
+    title: "Mens Casual Premium Slim Fit T-Shirts",
+    price: 22.3,
+    description: "Slim-fitting style, contrast raglan long sleeve, three-button henley placket, light weight & soft fabric for breathable and comfortable wearing.",
+    category: "men's clothing",
+    image: "https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg"
+  },
+  {
+    id: 3,
+    title: "Mens Cotton Jacket",
+    price: 55.99,
+    description: "Great outerwear jackets for Spring/Autumn/Winter, suitable for many occasions, such as working, hiking, camping, mountain/rock climbing",
+    category: "men's clothing",
+    image: "https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg"
+  },
+  {
+    id: 4,
+    title: "Mens Casual Slim Fit",
+    price: 15.99,
+    description: "The color could be slightly different between on the screen and in practice. / Please note that body builds vary by person, therefore, detailed size information should be reviewed below.",
+    category: "men's clothing",
+    image: "https://fakestoreapi.com/img/71YXzeOuslL._AC_UY879_.jpg"
+  },
+  {
+    id: 5,
+    title: "John Hardy Women's Legends Naga Gold & Silver Dragon Station Chain Bracelet",
+    price: 695,
+    description: "From our Legends Collection, the Naga was inspired by the mythical water dragon that protects the ocean's pearl. Wear facing inward to be bestowed with love and abundance",
+    category: "jewelery",
+    image: "https://fakestoreapi.com/img/71pWzhdJNwL._AC_UL640_QL65_ML3_.jpg"
+  }
+];
 
-const fetchFromFakeStore = () => {
-  return new Promise((resolve, reject) => {
-    const url = 'https://fakestoreapi.com/products';
-    
-    console.log('Fetching from Fake Store API:', url);
-    
-    // Add headers to make the request appear more like a browser request
-    const options = {
-      hostname: 'fakestoreapi.com',
-      path: '/products',
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://fakestoreapi.com',
-        'Origin': 'https://fakestoreapi.com'
-      }
-    };
-    
-    const request = https.get(options, (response) => {
-      let data = '';
-      
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      response.on('end', () => {
-        try {
-          console.log('Received data from Fake Store API, length:', data.length);
-          console.log('Response status code:', response.statusCode);
-          
-          // Check if we got an error status code
-          if (response.statusCode === 403) {
-            console.error('Received 403 Forbidden from Fake Store API - likely blocked in production');
-            // Try to parse the response even if it's an error page
-            if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
-              const products = JSON.parse(data);
-              console.log('Parsed products despite 403, count:', products.length);
-              resolve(products);
-            } else {
-              // If it's HTML or other content, reject with a specific error
-              reject(new Error('Access forbidden to Fake Store API (403)'));
-            }
-            return;
-          }
-          
-          if (response.statusCode !== 200) {
-            console.error('Received non-200 status code from Fake Store API:', response.statusCode);
-            reject(new Error(`Fake Store API returned status ${response.statusCode}`));
-            return;
-          }
-          
-          // Check if the response is HTML instead of JSON
-          if (data.trim().startsWith('<')) {
-            console.error('Received HTML instead of JSON from Fake Store API');
-            reject(new Error('Received HTML instead of JSON from Fake Store API'));
-            return;
-          }
-          
-          // Check for empty response
-          if (!data || data.length === 0) {
-            console.error('Received empty response from Fake Store API');
-            reject(new Error('Received empty response from Fake Store API'));
-            return;
-          }
-          
-          const products = JSON.parse(data);
-          console.log('Parsed products, count:', products.length);
-          resolve(products);
-        } catch (error) {
-          console.error('Error parsing Fake Store API response:', error.message);
-          console.error('Raw data:', data.substring(0, 200) + '...');
-          reject(new Error('Failed to parse response from Fake Store API: ' + error.message));
-        }
-      });
-    }).on('error', (error) => {
-      console.error('Network error fetching from Fake Store API:', error.message);
-      reject(new Error('Network error fetching from Fake Store API: ' + error.message));
-    });
-    
-    // Set timeout for the request
-    request.setTimeout(15000, () => {
-      request.destroy();
-      console.error('Timeout fetching from Fake Store API');
-      reject(new Error('Timeout fetching from Fake Store API'));
-    });
-  });
-};
+const axiosInstance = axios.create({
+  baseURL: 'https://fakestoreapi.com',
+  timeout: 15000,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': 'application/json',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://fakestoreapi.com',
+    'Origin': 'https://fakestoreapi.com',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'no-cache'
+  }
+});
 
-const fetchSingleFromFakeStore = (id) => {
-  return new Promise((resolve, reject) => {
-    // Validate ID is positive
-    if (id <= 0) {
-      reject(new Error('Invalid product ID: ' + id));
-      return;
+// Add response interceptor to handle errors
+axiosInstance.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('Axios error:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
     }
-    
-    // Add headers to make the request appear more like a browser request
-    const options = {
-      hostname: 'fakestoreapi.com',
-      path: `/products/${id}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://fakestoreapi.com',
-        'Origin': 'https://fakestoreapi.com'
-      }
-    };
-    
-    console.log('Fetching single product from Fake Store API:', `https://fakestoreapi.com/products/${id}`);
-    
-    const request = https.get(options, (response) => {
-      let data = '';
-      
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      response.on('end', () => {
-        try {
-          console.log('Received single product data from Fake Store API, length:', data.length);
-          console.log('Response status code:', response.statusCode);
-          
-          // Check if we got an error status code
-          if (response.statusCode === 403) {
-            console.error('Received 403 Forbidden from Fake Store API for product ID:', id);
-            reject(new Error('Access forbidden to Fake Store API (403)'));
-            return;
-          }
-          
-          if (response.statusCode === 404) {
-            console.error('Product not found in Fake Store API for ID:', id);
-            reject(new Error('Product not found in Fake Store API'));
-            return;
-          }
-          
-          if (response.statusCode !== 200) {
-            console.error('Received non-200 status code from Fake Store API:', response.statusCode);
-            reject(new Error(`Fake Store API returned status ${response.statusCode}`));
-            return;
-          }
-          
-          // Check if the response is HTML instead of JSON
-          if (data.trim().startsWith('<')) {
-            console.error('Received HTML instead of JSON from Fake Store API for product:', id);
-            reject(new Error('Received HTML instead of JSON from Fake Store API'));
-            return;
-          }
-          
-          // Check for empty response or 404
-          if (!data || data.length === 0) {
-            console.error('Received empty response from Fake Store API for product:', id);
-            reject(new Error('Product not found in Fake Store API'));
-            return;
-          }
-          
-          const product = JSON.parse(data);
-          console.log('Parsed single product:', product.id);
-          resolve(product);
-        } catch (error) {
-          console.error('Error parsing Fake Store API single product response:', error.message);
-          console.error('Raw data:', data.substring(0, 200) + '...');
-          reject(new Error('Failed to parse response from Fake Store API: ' + error.message));
-        }
-      });
-    }).on('error', (error) => {
-      console.error('Network error fetching single product from Fake Store API:', error.message);
-      reject(new Error('Network error fetching single product from Fake Store API: ' + error.message));
+    return Promise.resolve({ 
+      status: error.response ? error.response.status : 0, 
+      data: null,
+      error: error.message 
     });
+  }
+);
+
+const fetchFromFakeStore = async () => {
+  try {
+    console.log('Fetching from Fake Store API: /products');
     
-    // Set timeout for the request
-    request.setTimeout(15000, () => {
-      request.destroy();
-      console.error('Timeout fetching single product from Fake Store API for ID:', id);
-      reject(new Error('Timeout fetching single product from Fake Store API'));
-    });
-  });
+    const response = await axiosInstance.get('/products');
+    
+    console.log('Received data from Fake Store API, length:', response.data ? response.data.length : 0);
+    console.log('Response status code:', response.status);
+    
+    // Check if we got a successful response
+    if (response.status === 200 && response.data) {
+      console.log('Successfully fetched products, count:', response.data.length);
+      return response.data;
+    } else {
+      console.error('Received non-200 status code or no data from Fake Store API:', response.status);
+      return sampleProducts;
+    }
+  } catch (error) {
+    console.error('Error fetching from Fake Store API:', error.message);
+    // Return sample products as fallback
+    return sampleProducts;
+  }
 };
 
+const fetchSingleFromFakeStore = async (id) => {
+  try {
+    console.log('Fetching single product from Fake Store API:', `/products/${id}`);
+    
+    const response = await axiosInstance.get(`/products/${id}`);
+    
+    console.log('Received single product data from Fake Store API, length:', response.data ? response.data.length : 0);
+    console.log('Response status code:', response.status);
+    
+    // Check if we got a successful response
+    if (response.status === 200 && response.data) {
+      console.log('Successfully fetched single product:', response.data.id);
+      return response.data;
+    } else {
+      console.error('Received non-200 status code or no data from Fake Store API:', response.status);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching single product from Fake Store API:', error.message);
+    return null;
+  }
+};
 
 const transformProducts = (fakeStoreProducts) => {
   console.log('Transforming Fake Store products, input count:', fakeStoreProducts.length);
-  const result = fakeStoreProducts.map((product, index) => ({
+  const result = fakeStoreProducts.map((product) => ({
     id: 1000 + product.id, // Use the actual product ID from Fake Store API
     name: product.title,
     price: product.price,
@@ -204,7 +142,6 @@ const transformProducts = (fakeStoreProducts) => {
   return result;
 };
 
-
 const transformSingleProduct = (fakeStoreProduct) => {
   return {
     id: 1000 + fakeStoreProduct.id, // Use the actual product ID from Fake Store API
@@ -216,7 +153,6 @@ const transformSingleProduct = (fakeStoreProduct) => {
     stock: Math.floor(Math.random() * 100) + 1
   };
 };
-
 
 const getFakeStoreProducts = async () => {
   const now = Date.now();
@@ -243,8 +179,9 @@ const getFakeStoreProducts = async () => {
   } catch (error) {
     console.error('Error fetching from Fake Store API:', error.message);
     console.error('Stack trace:', error.stack);
-    // Return empty array as fallback instead of throwing error
-    return [];
+    // Return sample products as fallback instead of throwing error
+    const transformedProducts = transformProducts(sampleProducts);
+    return transformedProducts;
   }
 };
 
@@ -268,10 +205,14 @@ const getFakeStoreProductById = async (id) => {
     
     // Validate that we have a positive ID
     if (originalId <= 0) {
-      throw new Error('Invalid product ID: ' + id);
+      return null;
     }
     
     const fakeStoreProduct = await fetchSingleFromFakeStore(originalId);
+    
+    if (!fakeStoreProduct) {
+      return null;
+    }
     
     const transformedProduct = transformSingleProduct(fakeStoreProduct);
     
