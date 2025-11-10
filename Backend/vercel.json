@@ -9,39 +9,46 @@
   "routes": [
     {
       "src": "/api/health",
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/products",
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/products/.*",
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/cart",
       "methods": ["GET", "POST"],
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/cart/.*",
       "methods": ["PUT", "DELETE"],
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/checkout",
       "methods": ["POST"],
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/checkout/.*",
       "methods": ["GET"],
-      "dest": "/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/(.*)",
-      "dest": "/server.js"
+      "dest": "server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
     }
-  ]
+  ],
+  "github": {
+    "silent": true
+  }
 }
