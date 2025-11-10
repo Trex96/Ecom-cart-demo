@@ -38,6 +38,42 @@ const fetchFromFakeStore = () => {
   });
 };
 
+const fetchSingleFromFakeStore = (id) => {
+  // Convert our transformed ID back to the original Fake Store API ID
+  // Our IDs start at 1000, but the original IDs start at 1
+  const originalId = id - 999;
+  
+  return new Promise((resolve, reject) => {
+    const url = `https://fakestoreapi.com/products/${originalId}`;
+    
+    console.log('Fetching single product from Fake Store API:', url);
+    
+    https.get(url, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          console.log('Received single product data from Fake Store API, length:', data.length);
+          const product = JSON.parse(data);
+          console.log('Parsed single product:', product.id);
+          resolve(product);
+        } catch (error) {
+          console.error('Error parsing Fake Store API single product response:', error.message);
+          console.error('Raw data:', data.substring(0, 200) + '...');
+          reject(error);
+        }
+      });
+    }).on('error', (error) => {
+      console.error('Error fetching single product from Fake Store API:', error.message);
+      reject(error);
+    });
+  });
+};
+
 
 const transformProducts = (fakeStoreProducts) => {
   console.log('Transforming Fake Store products, input count:', fakeStoreProducts.length);
@@ -52,6 +88,19 @@ const transformProducts = (fakeStoreProducts) => {
   }));
   console.log('Transformation complete, output count:', result.length);
   return result;
+};
+
+
+const transformSingleProduct = (fakeStoreProduct, index) => {
+  return {
+    id: 1000 + index,
+    name: fakeStoreProduct.title,
+    price: fakeStoreProduct.price,
+    description: fakeStoreProduct.description,
+    image: fakeStoreProduct.image,
+    category: fakeStoreProduct.category,
+    stock: Math.floor(Math.random() * 100) + 1
+  };
 };
 
 
@@ -84,6 +133,38 @@ const getFakeStoreProducts = async () => {
   }
 };
 
+const getFakeStoreProductById = async (id) => {
+  try {
+    // First check if we have cached products and the ID exists in them
+    if (cachedProducts) {
+      const cachedProduct = cachedProducts.find(p => p.id == id);
+      if (cachedProduct) {
+        console.log('Found product in cache:', cachedProduct.id);
+        return cachedProduct;
+      }
+    }
+    
+    // If not in cache, fetch from API
+    console.log('Fetching fresh single product from Fake Store API, ID:', id);
+    
+    // Convert our transformed ID back to the original Fake Store API ID
+    const originalId = id - 999;
+    const fakeStoreProduct = await fetchSingleFromFakeStore(originalId);
+    
+    // Find the index to maintain consistency with our ID transformation
+    // In a real implementation, you might want to store a mapping
+    const index = originalId - 1;
+    const transformedProduct = transformSingleProduct(fakeStoreProduct, index);
+    
+    return transformedProduct;
+  } catch (error) {
+    console.error('Error fetching single product from Fake Store API:', error.message);
+    console.error('Stack trace:', error.stack);
+    throw new Error('Failed to fetch product from external API: ' + error.message);
+  }
+};
+
 module.exports = {
-  getFakeStoreProducts
+  getFakeStoreProducts,
+  getFakeStoreProductById
 };

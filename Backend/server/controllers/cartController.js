@@ -2,6 +2,7 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const asyncHandler = require('../middleware/asyncHandler');
 const { validateCartItemMixed, handleValidationErrors } = require('../middleware/validators');
+const { getFakeStoreProductById } = require('../services/fakeStoreService');
 
 // Function to enhance cart items with product details
 const enhanceCartItems = async (cartItems) => {
@@ -14,19 +15,55 @@ const enhanceCartItems = async (cartItems) => {
                              (typeof item.productId === 'string' && !item.productId.match(/^[0-9a-fA-F]{24}$/));
     
     if (isExternalProduct) {
-      // For external products, we don't populate from database
-      // In a real implementation, you might fetch from external API
-      enhancedItems.push({
-        ...item.toObject ? item.toObject() : item,
-        productId: {
-          _id: item.productId,
-          id: item.productId,
-          name: `External Product ${item.productId}`,
-          price: item.price || 0,
-          image: 'https://via.placeholder.com/150x150?text=External+Product' // Add default image for external products
+      try {
+        // For external products, fetch actual product details from external API
+        const externalProductId = typeof item.productId === 'string' ? parseInt(item.productId) : item.productId;
+        const externalProduct = await getFakeStoreProductById(externalProductId);
+        
+        if (externalProduct) {
+          enhancedItems.push({
+            ...item.toObject ? item.toObject() : item,
+            productId: {
+              _id: externalProduct.id,
+              id: externalProduct.id,
+              name: externalProduct.name,
+              price: externalProduct.price,
+              image: externalProduct.image,
+              description: externalProduct.description,
+              category: externalProduct.category
+            },
+            price: externalProduct.price // Update the item price
+          });
+          totalAmount += externalProduct.price * item.quantity;
+        } else {
+          // If external product not found, use placeholder
+          enhancedItems.push({
+            ...item.toObject ? item.toObject() : item,
+            productId: {
+              _id: item.productId,
+              id: item.productId,
+              name: `External Product ${item.productId}`,
+              price: item.price || 0,
+              image: 'https://via.placeholder.com/150x150?text=External+Product'
+            }
+          });
+          totalAmount += (item.price || 0) * item.quantity;
         }
-      });
-      totalAmount += (item.price || 0) * item.quantity;
+      } catch (error) {
+        console.error('Error fetching external product:', error);
+        // If there's an error fetching external product, use placeholder
+        enhancedItems.push({
+          ...item.toObject ? item.toObject() : item,
+          productId: {
+            _id: item.productId,
+            id: item.productId,
+            name: `External Product ${item.productId}`,
+            price: item.price || 0,
+            image: 'https://via.placeholder.com/150x150?text=External+Product'
+          }
+        });
+        totalAmount += (item.price || 0) * item.quantity;
+      }
     } else {
       // For local products, populate from database
       const product = await Product.findById(item.productId);
@@ -98,12 +135,23 @@ const addToCart = [
     let product = null;
     
     if (isExternal) {
-      // For external products, we don't validate against the database
-      // We just store the product ID and assume it's valid
-      product = {
-        _id: productId, // Use the external ID as _id for consistency
-        price: 0 // Price will be set when we retrieve the product details
-      };
+      // For external products, fetch actual product details
+      try {
+        const externalProductId = typeof productId === 'string' ? parseInt(productId) : productId;
+        product = await getFakeStoreProductById(externalProductId);
+        if (!product) {
+          return res.status(404).json({ 
+            success: false,
+            error: 'External product not found' 
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching external product:', error);
+        return res.status(500).json({ 
+          success: false,
+          error: 'Failed to fetch external product details' 
+        });
+      }
     } else {
       // Check if product exists in our database
       product = await Product.findById(productId);
@@ -136,7 +184,7 @@ const addToCart = [
       cart.items.push({
         productId: productId,
         quantity: quantity,
-        price: product.price || 0 // Use 0 for external products, will be updated when retrieved
+        price: product.price || 0 // Use actual price for external products
       });
     }
     

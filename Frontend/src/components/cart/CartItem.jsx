@@ -12,7 +12,6 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
       if (typeof item.productId === 'object' && item.productId !== null) {
         const product = item.productId;
         // Determine if this is an external product based on ID type
-        console.log(product)
         const isExternal = typeof product.id === 'number' || 
                           (typeof product.id === 'string' && !product.id.match(/^[0-9a-fA-F]{24}$/));
         
@@ -21,7 +20,7 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
           image: product.image || 
                  (isExternal ? 'https://fakestoreapi.com/icons/logo.png' : 
                                'https://via.placeholder.com/150x150?text=Product+Image'),
-          price: item.price || product.price || 0
+          price: product.price || 0
         };
       }
       
@@ -84,7 +83,10 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
           onError={(e) => {
             // Try different fallback images based on product type
             const isExternal = typeof item.productId === 'number' || 
-                              (typeof item.productId === 'string' && !item.productId.match(/^[0-9a-fA-F]{24}$/));
+                              (typeof item.productId === 'string' && !item.productId.match(/^[0-9a-fA-F]{24}$/)) ||
+                              (typeof item.productId === 'object' && item.productId && 
+                               (typeof item.productId.id === 'number' || 
+                                (typeof item.productId.id === 'string' && !item.productId.id.match(/^[0-9a-fA-F]{24}$/))));
             
             if (isExternal) {
               e.target.src = 'https://fakestoreapi.com/icons/logo.png';
@@ -107,34 +109,44 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
           
           {/* Quantity Controls */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center border border-gray-300 rounded-md bg-white">
-              <button
-                onClick={() => handleQuantityChange(quantity - 1)}
-                disabled={isUpdating || quantity <= 1}
-                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-md"
-              >
-                -
-              </button>
-              <span className="px-3 py-1 text-gray-900 min-w-[3rem] text-center">{quantity}</span>
-              <button
-                onClick={() => handleQuantityChange(quantity + 1)}
-                disabled={isUpdating}
-                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-md"
-              >
-                +
-              </button>
-            </div>
-            
-            {/* Remove Button */}
             <button
-              onClick={handleRemove}
+              onClick={() => handleQuantityChange(quantity - 1)}
               disabled={isUpdating}
-              className="p-2 text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full hover:bg-red-50"
-              aria-label="Remove item"
+              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              aria-label="Decrease quantity"
             >
-              <X size={20} />
+              -
+            </button>
+            
+            <span className="w-12 text-center font-medium">
+              {isUpdating ? (
+                <span className="text-sm text-gray-500">...</span>
+              ) : (
+                quantity
+              )}
+            </span>
+            
+            <button
+              onClick={() => handleQuantityChange(quantity + 1)}
+              disabled={isUpdating}
+              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              aria-label="Increase quantity"
+            >
+              +
             </button>
           </div>
+        </div>
+        
+        {/* Remove Button */}
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleRemove}
+            disabled={isUpdating}
+            className="flex items-center text-red-600 hover:text-red-800 font-medium transition-colors disabled:opacity-50"
+          >
+            <X size={16} className="mr-1" />
+            Remove
+          </button>
         </div>
       </div>
     </div>

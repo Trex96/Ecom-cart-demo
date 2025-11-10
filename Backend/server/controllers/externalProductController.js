@@ -1,5 +1,5 @@
 const asyncHandler = require('../middleware/asyncHandler');
-const { getFakeStoreProducts } = require('../services/fakeStoreService');
+const { getFakeStoreProducts, getFakeStoreProductById } = require('../services/fakeStoreService');
 
 // @desc    Get products from Fake Store API
 // @route   GET /api/products/external
@@ -26,8 +26,16 @@ const getExternalProducts = asyncHandler(async (req, res) => {
 const getExternalProductById = asyncHandler(async (req, res) => {
   try {
     console.log('Fetching external product by ID:', req.params.id);
-    const products = await getFakeStoreProducts();
-    const product = products.find(p => p.id == req.params.id);
+    // Validate that the ID is a number
+    if (isNaN(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid product ID format'
+      });
+    }
+    
+    const productId = parseInt(req.params.id);
+    const product = await getFakeStoreProductById(productId);
     
     if (product) {
       res.json(product);
