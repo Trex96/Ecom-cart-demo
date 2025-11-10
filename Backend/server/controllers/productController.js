@@ -13,6 +13,14 @@ const getProducts = asyncHandler(async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
+  // Validate that the ID is a valid ObjectId
+  if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid product ID format'
+    });
+  }
+  
   const product = await Product.findById(req.params.id);
   
   if (product) {

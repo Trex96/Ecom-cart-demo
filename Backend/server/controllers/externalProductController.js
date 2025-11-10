@@ -6,9 +6,40 @@ const { getFakeStoreProducts } = require('../services/fakeStoreService');
 // @access  Public
 const getExternalProducts = asyncHandler(async (req, res) => {
   try {
+    console.log('Fetching external products from Fake Store API');
     const products = await getFakeStoreProducts();
+    console.log('External products fetched successfully, count:', products.length);
     res.json(products);
   } catch (error) {
+    console.error('Error in getExternalProducts:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// @desc    Get single product from Fake Store API by ID
+// @route   GET /api/products/external/:id
+// @access  Public
+const getExternalProductById = asyncHandler(async (req, res) => {
+  try {
+    console.log('Fetching external product by ID:', req.params.id);
+    const products = await getFakeStoreProducts();
+    const product = products.find(p => p.id == req.params.id);
+    
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'External product not found'
+      });
+    }
+  } catch (error) {
+    console.error('Error in getExternalProductById:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: error.message
@@ -17,5 +48,6 @@ const getExternalProducts = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  getExternalProducts
+  getExternalProducts,
+  getExternalProductById
 };

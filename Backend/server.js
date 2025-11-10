@@ -19,8 +19,8 @@ connectDB();
 
 // Routes
 app.use('/api/cart', require('./server/routes/cartRoutes'));
+app.use('/api/products/external', require('./server/routes/externalProductRoutes'));
 app.use('/api/products', require('./server/routes/productRoutes'));
-app.use('/api/products', require('./server/routes/externalProductRoutes'));
 app.use('/api/checkout', require('./server/routes/checkoutRoutes'));
 
 // Health check endpoint
@@ -34,10 +34,11 @@ app.get('/api/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Unhandled error:', err);
+  console.error('Error stack:', err.stack);
   res.status(500).json({
     success: false,
-    error: 'Something went wrong!'
+    error: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : err.message
   });
 });
 
