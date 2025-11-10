@@ -16,13 +16,7 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB();
 
-// Routes
-app.use('/api/cart', require('./server/routes/cartRoutes'));
-app.use('/api/products/external', require('./server/routes/externalProductRoutes'));
-app.use('/api/products', require('./server/routes/productRoutes'));
-app.use('/api/checkout', require('./server/routes/checkoutRoutes'));
-
-// Health check endpoint
+// Health check endpoint (place this before other routes)
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -30,6 +24,12 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Routes - order matters!
+app.use('/api/cart', require('./server/routes/cartRoutes'));
+app.use('/api/products/external', require('./server/routes/externalProductRoutes'));
+app.use('/api/products', require('./server/routes/productRoutes'));
+app.use('/api/checkout', require('./server/routes/checkoutRoutes'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -41,7 +41,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - this should be the last middleware
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
