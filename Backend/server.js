@@ -9,16 +9,13 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// CORS configuration using environment variables
-const allowedOrigins = [
-  'http://localhost:5173', // Vite dev server
-  'http://localhost:3000', // Alternative local dev
-  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
-];
-const corsOrigins = allowedOrigins.filter(origin => origin && origin.trim() !== '');
-
+// Simplified CORS configuration using environment variables
 const corsOptions = {
-  origin: corsOrigins,
+  origin: [
+    'http://localhost:5173', // Vite dev server
+    'http://localhost:3000', // Alternative local dev
+    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
+  ].filter(origin => origin && origin !== ''),
   credentials: true,
   optionsSuccessStatus: 200
 };
