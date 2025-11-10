@@ -13,9 +13,25 @@ import api from './api';
 export const getAllExternalProducts = async () => {
   try {
     const response = await api.get('/products/external');
-    return response.data;
+    
+    // Handle different response formats
+    if (response.data && response.data.data) {
+      // If response has a data wrapper
+      return Array.isArray(response.data.data) ? response.data.data : [];
+    } else if (response.data && Array.isArray(response.data)) {
+      // If response is directly an array
+      return response.data;
+    } else if (response.data && response.data.products) {
+      // If response has a products property
+      return Array.isArray(response.data.products) ? response.data.products : [];
+    } else {
+      // Fallback to empty array
+      return [];
+    }
   } catch (error) {
-    throw new Error(error.message || 'Failed to fetch external products');
+    console.error('Error fetching external products:', error);
+    // Return empty array instead of throwing error to prevent app crash
+    return [];
   }
 };
 
@@ -28,8 +44,15 @@ export const getAllExternalProducts = async () => {
 export const getExternalProductById = async (id) => {
   try {
     const response = await api.get(`/products/external/${id}`);
-    return response.data;
+    
+    // Handle different response formats
+    if (response.data && response.data.data) {
+      return response.data.data;
+    } else {
+      return response.data;
+    }
   } catch (error) {
+    console.error('Error fetching external product:', error);
     throw new Error(error.message || 'Failed to fetch external product');
   }
 };

@@ -27,50 +27,36 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
       // Fallback: check if item itself has product details
       return {
         name: item.name || item.title || `Product ${item.productId || 'N/A'}`,
-        image: item.image || 'https://via.placeholder.com/150x150?text=Product+Image',
+        image: item.image || 'https://fakestoreapi.com/icons/logo.png',
         price: item.price || 0
       };
     } catch (error) {
       // Final fallback
       return {
         name: `Product ${item.productId || 'N/A'}`,
-        image: 'https://via.placeholder.com/150x150?text=Product+Image',
+        image: 'https://fakestoreapi.com/icons/logo.png',
         price: item.price || 0
       };
     }
   };
 
-  // Get product details
   const productDetails = getProductDetails(item);
-  const { name: productName, image: productImage, price: productPrice } = productDetails;
+  const productName = productDetails.name;
+  const productImage = productDetails.image;
+  const productPrice = productDetails.price;
 
-  const handleQuantityChange = async (newQuantity) => {
-    if (newQuantity < 1) return;
+  const handleQuantityChange = (newQuantity) => {
+    if (newQuantity < 1) newQuantity = 1;
+    if (newQuantity > 99) newQuantity = 99;
     
     setQuantity(newQuantity);
-    setIsUpdating(true);
     
-    try {
-      await onUpdateQuantity(item._id, newQuantity);
-    } catch (error) {
-      // Revert on error
-      setQuantity(item.quantity);
-    } finally {
-      setIsUpdating(false);
+    if (onUpdateQuantity) {
+      setIsUpdating(true);
+      onUpdateQuantity(item._id, newQuantity)
+        .finally(() => setIsUpdating(false));
     }
   };
-
-  const handleRemove = async () => {
-    try {
-      await onRemove(item._id);
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    }
-  };
-
-  // Format prices to 2 decimal places
-  const formattedPrice = typeof productPrice === 'number' ? productPrice.toFixed(2) : '0.00';
-  const totalPrice = typeof productPrice === 'number' ? (productPrice * quantity).toFixed(2) : '0.00';
 
   return (
     <div className="p-6 flex flex-col sm:flex-row items-center gap-4 slide-in-right bg-white rounded-lg shadow-sm border border-gray-200">
@@ -101,52 +87,47 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           {/* Product Info */}
           <div className="flex-grow">
-            <h3 className="font-semibold text-gray-900 text-lg">{productName}</h3>
-            <p className="text-gray-600 mt-1">
-              ${formattedPrice} × {quantity} = ${totalPrice}
-            </p>
+            <h3 className="font-medium text-gray-900">{productName}</h3>
+            <p className="text-lg font-semibold text-indigo-600 mt-1">${productPrice.toFixed(2)}</p>
           </div>
           
           {/* Quantity Controls */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleQuantityChange(quantity - 1)}
-              disabled={isUpdating}
-              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              aria-label="Decrease quantity"
-            >
-              -
-            </button>
+            <div className="flex items-center border border-gray-300 rounded-md">
+              <button
+                onClick={() => handleQuantityChange(quantity - 1)}
+                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                disabled={isUpdating || quantity <= 1}
+              >
+                -
+              </button>
+              <span className="px-3 py-1 w-12 text-center">
+                {isUpdating ? '...' : quantity}
+              </span>
+              <button
+                onClick={() => handleQuantityChange(quantity + 1)}
+                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                disabled={isUpdating || quantity >= 99}
+              >
+                +
+              </button>
+            </div>
             
-            <span className="w-12 text-center font-medium">
-              {isUpdating ? (
-                <span className="text-sm text-gray-500">...</span>
-              ) : (
-                quantity
-              )}
-            </span>
-            
             <button
-              onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={isUpdating}
-              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-              aria-label="Increase quantity"
+              onClick={() => onRemove(item._id)}
+              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+              aria-label="Remove item"
             >
-              +
+              <X size={20} />
             </button>
           </div>
         </div>
         
-        {/* Remove Button */}
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={handleRemove}
-            disabled={isUpdating}
-            className="flex items-center text-red-600 hover:text-red-800 font-medium transition-colors disabled:opacity-50"
-          >
-            <X size={16} className="mr-1" />
-            Remove
-          </button>
+        {/* Total for this item */}
+        <div className="mt-2 text-right">
+          <p className="text-sm text-gray-500">
+            Total: <span className="font-semibold">${(productPrice * quantity).toFixed(2)}</span>
+          </p>
         </div>
       </div>
     </div>

@@ -44,7 +44,7 @@ const enhanceCartItems = async (cartItems) => {
               id: item.productId,
               name: `External Product ${item.productId}`,
               price: item.price || 0,
-              image: 'https://via.placeholder.com/150x150?text=External+Product'
+              image: 'https://fakestoreapi.com/icons/logo.png'
             }
           });
           totalAmount += (item.price || 0) * item.quantity;
@@ -59,7 +59,7 @@ const enhanceCartItems = async (cartItems) => {
             id: item.productId,
             name: `External Product ${item.productId}`,
             price: item.price || 0,
-            image: 'https://via.placeholder.com/150x150?text=External+Product'
+            image: 'https://fakestoreapi.com/icons/logo.png'
           }
         });
         totalAmount += (item.price || 0) * item.quantity;
@@ -140,17 +140,23 @@ const addToCart = [
         const externalProductId = typeof productId === 'string' ? parseInt(productId) : productId;
         product = await getFakeStoreProductById(externalProductId);
         if (!product) {
-          return res.status(404).json({ 
-            success: false,
-            error: 'External product not found' 
-          });
+          // Instead of returning an error, create a placeholder product
+          product = {
+            id: externalProductId,
+            name: `External Product ${externalProductId}`,
+            price: 0, // Will be updated when product details are available
+            image: 'https://fakestoreapi.com/icons/logo.png'
+          };
         }
       } catch (error) {
         console.error('Error fetching external product:', error);
-        return res.status(500).json({ 
-          success: false,
-          error: 'Failed to fetch external product details' 
-        });
+        // Create a placeholder product even if there's an error
+        product = {
+          id: typeof productId === 'string' ? parseInt(productId) : productId,
+          name: `External Product ${typeof productId === 'string' ? parseInt(productId) : productId}`,
+          price: 0,
+          image: 'https://fakestoreapi.com/icons/logo.png'
+        };
       }
     } else {
       // Check if product exists in our database

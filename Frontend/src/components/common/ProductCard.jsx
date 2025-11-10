@@ -18,7 +18,7 @@ const ProductCard = ({ product, onAddToCart, loading, isExternal = false }) => {
   const productId = isExternal ? product.id : product._id;
   
   const imageUrl = product.image || 
-                   (isExternal ? product.image : null) || 
+                   (isExternal ? 'https://fakestoreapi.com/icons/logo.png' : null) || 
                    'https://via.placeholder.com/300x300?text=Product+Image';
   
 
@@ -35,7 +35,12 @@ const ProductCard = ({ product, onAddToCart, loading, isExternal = false }) => {
           alt={productName}
           className="absolute h-full w-full object-cover"
           onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/300x300?text=Product+Image';
+            // Use appropriate fallback image based on product type
+            if (isExternal) {
+              e.target.src = 'https://fakestoreapi.com/icons/logo.png';
+            } else {
+              e.target.src = 'https://via.placeholder.com/300x300?text=Product+Image';
+            }
           }}
         />
       </div>
@@ -46,23 +51,17 @@ const ProductCard = ({ product, onAddToCart, loading, isExternal = false }) => {
         </h3>
         
         <div className="flex items-center justify-between mt-4">
-          <span className="text-lg font-bold text-blue-600">
-            ${typeof productPrice === 'number' ? productPrice.toFixed(2) : '0.00'}
+          <span className="text-lg font-bold text-indigo-600">
+            ${productPrice?.toFixed(2)}
           </span>
           
           <button
             onClick={handleAddToCart}
             disabled={loading || isAdding}
-            className={`flex items-center justify-center px-3 py-2 rounded-md transition-colors ${
-              isAdding
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-3 py-2 rounded-lg transition-colors text-sm font-medium"
           >
-            <ShoppingCart size={16} className="mr-1" />
-            <span className="text-sm">
-              {isAdding ? 'Adding...' : 'Add'}
-            </span>
+            <ShoppingCart size={16} />
+            {isAdding ? 'Adding...' : 'Add to Cart'}
           </button>
         </div>
       </div>

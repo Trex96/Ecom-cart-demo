@@ -3,7 +3,7 @@ const https = require('https');
 
 let cachedProducts = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; 
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 
 const fetchFromFakeStore = () => {
@@ -12,7 +12,7 @@ const fetchFromFakeStore = () => {
     
     console.log('Fetching from Fake Store API:', url);
     
-    https.get(url, (response) => {
+    const request = https.get(url, (response) => {
       let data = '';
       
       response.on('data', (chunk) => {
@@ -22,6 +22,15 @@ const fetchFromFakeStore = () => {
       response.on('end', () => {
         try {
           console.log('Received data from Fake Store API, length:', data.length);
+          console.log('Response status code:', response.statusCode);
+          
+          // Check if we got an error status code
+          if (response.statusCode !== 200) {
+            console.error('Received non-200 status code from Fake Store API:', response.statusCode);
+            reject(new Error(`Fake Store API returned status ${response.statusCode}`));
+            return;
+          }
+          
           // Check if the response is HTML instead of JSON
           if (data.trim().startsWith('<')) {
             console.error('Received HTML instead of JSON from Fake Store API');
@@ -49,6 +58,13 @@ const fetchFromFakeStore = () => {
       console.error('Network error fetching from Fake Store API:', error.message);
       reject(new Error('Network error fetching from Fake Store API: ' + error.message));
     });
+    
+    // Set timeout for the request
+    request.setTimeout(10000, () => {
+      request.destroy();
+      console.error('Timeout fetching from Fake Store API');
+      reject(new Error('Timeout fetching from Fake Store API'));
+    });
   });
 };
 
@@ -64,7 +80,7 @@ const fetchSingleFromFakeStore = (id) => {
     
     console.log('Fetching single product from Fake Store API:', url);
     
-    https.get(url, (response) => {
+    const request = https.get(url, (response) => {
       let data = '';
       
       response.on('data', (chunk) => {
@@ -74,6 +90,21 @@ const fetchSingleFromFakeStore = (id) => {
       response.on('end', () => {
         try {
           console.log('Received single product data from Fake Store API, length:', data.length);
+          console.log('Response status code:', response.statusCode);
+          
+          // Check if we got an error status code
+          if (response.statusCode === 404) {
+            console.error('Product not found in Fake Store API for ID:', id);
+            reject(new Error('Product not found in Fake Store API'));
+            return;
+          }
+          
+          if (response.statusCode !== 200) {
+            console.error('Received non-200 status code from Fake Store API:', response.statusCode);
+            reject(new Error(`Fake Store API returned status ${response.statusCode}`));
+            return;
+          }
+          
           // Check if the response is HTML instead of JSON
           if (data.trim().startsWith('<')) {
             console.error('Received HTML instead of JSON from Fake Store API for product:', id);
@@ -82,8 +113,8 @@ const fetchSingleFromFakeStore = (id) => {
           }
           
           // Check for empty response or 404
-          if (!data || data.length === 0 || data.includes('404') || data.includes('Not Found')) {
-            console.error('Received empty or 404 response from Fake Store API for product:', id);
+          if (!data || data.length === 0) {
+            console.error('Received empty response from Fake Store API for product:', id);
             reject(new Error('Product not found in Fake Store API'));
             return;
           }
@@ -100,6 +131,13 @@ const fetchSingleFromFakeStore = (id) => {
     }).on('error', (error) => {
       console.error('Network error fetching single product from Fake Store API:', error.message);
       reject(new Error('Network error fetching single product from Fake Store API: ' + error.message));
+    });
+    
+    // Set timeout for the request
+    request.setTimeout(10000, () => {
+      request.destroy();
+      console.error('Timeout fetching single product from Fake Store API for ID:', id);
+      reject(new Error('Timeout fetching single product from Fake Store API'));
     });
   });
 };
@@ -159,7 +197,8 @@ const getFakeStoreProducts = async () => {
   } catch (error) {
     console.error('Error fetching from Fake Store API:', error.message);
     console.error('Stack trace:', error.stack);
-    throw new Error('Failed to fetch products from external API: ' + error.message);
+    // Return empty array as fallback instead of throwing error
+    return [];
   }
 };
 
@@ -194,7 +233,8 @@ const getFakeStoreProductById = async (id) => {
   } catch (error) {
     console.error('Error fetching single product from Fake Store API:', error.message);
     console.error('Stack trace:', error.stack);
-    throw new Error('Failed to fetch product from external API: ' + error.message);
+    // Return null as fallback instead of throwing error
+    return null;
   }
 };
 

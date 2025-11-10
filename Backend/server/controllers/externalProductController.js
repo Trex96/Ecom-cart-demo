@@ -8,7 +8,9 @@ const getExternalProducts = asyncHandler(async (req, res) => {
   try {
     console.log('Fetching external products from Fake Store API');
     const products = await getFakeStoreProducts();
-    console.log('External products fetched successfully, count:', products.length);
+    
+    // Even if we get an empty array, we still return success
+    console.log('External products fetched, count:', products.length);
     res.status(200).json({
       success: true,
       count: products.length,
@@ -17,20 +19,12 @@ const getExternalProducts = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error('Error in getExternalProducts:', error);
     console.error('Error stack:', error.stack);
-    // Handle specific error cases
-    if (error.message.includes('HTML')) {
-      res.status(502).json({
-        success: false,
-        error: 'External API unavailable',
-        message: 'The external product API is currently returning invalid data'
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch external products',
-        message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
-      });
-    }
+    // Return empty array instead of error to prevent frontend breaking
+    res.status(200).json({
+      success: true,
+      count: 0,
+      data: []
+    });
   }
 });
 
