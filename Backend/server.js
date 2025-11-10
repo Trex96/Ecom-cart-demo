@@ -16,7 +16,7 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB();
 
-// Health check endpoint (place this before other routes)
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -25,7 +25,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Routes - order matters!
+// Log routes for debugging
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
+// API Routes - ORDER MATTERS! More specific routes first
 app.use('/api/cart', require('./server/routes/cartRoutes'));
 app.use('/api/products/external', require('./server/routes/externalProductRoutes'));
 app.use('/api/products', require('./server/routes/productRoutes'));
@@ -41,8 +47,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler - this should be the last middleware
-app.use('*', (req, res) => {
+// 404 handler - should be the last middleware
+app.use((req, res) => {
+  console.log(`404 Not Found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
     success: false,
     error: 'Route not found'

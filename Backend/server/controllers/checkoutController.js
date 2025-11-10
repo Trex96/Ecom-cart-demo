@@ -81,7 +81,7 @@ const processCheckout = [
 ];
 
 // @desc    Get order by ID
-// @route   GET /api/orders/:orderId
+// @route   GET /api/checkout/:orderId (fixed the route comment)
 // @access  Public
 const getOrderById = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
