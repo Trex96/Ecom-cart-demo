@@ -9,15 +9,6 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// Add Vercel authentication bypass middleware
-app.use((req, res, next) => {
-  // Allow all API routes to bypass authentication
-  if (req.originalUrl.startsWith('/api')) {
-    res.setHeader('x-vercel-set-bypass-cookie', 'true');
-  }
-  next();
-});
-
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.originalUrl}`);
@@ -25,11 +16,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Simple and permissive CORS configuration for debugging
-app.use(cors({
-  origin: true, // Reflect the request origin
-  credentials: true
-}));
+// Simple CORS configuration
+app.use(cors());
 
 app.use(express.json());
 
