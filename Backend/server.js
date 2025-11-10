@@ -9,30 +9,37 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// CORS configuration allowing all Vercel domains
-const corsOptions = {
-  origin: function (origin, callback) {
-
-    if (!origin) return callback(null, true);
-    
-
-    const allowedOrigins = [
-      'http://localhost:5173', // Vite dev server
-      'http://localhost:3000', // Alternative local dev
-      ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
-    ];
-    
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
+// Custom CORS middleware to handle all Vercel domains
+const corsMiddleware = (req, res, next) => {
+  const origin = req.get('Origin');
+  
+  // List of allowed origins
+  const allowedOrigins = [
+    'http://localhost:5173', // Vite dev server
+    'http://localhost:3000', // Alternative local dev
+    'http://127.0.0.1:5173', // Alternative Vite dev server
+    'http://127.0.0.1:3000', // Alternative local dev
+    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
+  ];
+  
+  // Check if origin is allowed or is a Vercel domain
+  if (!origin || allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
 };
 
-app.use(cors(corsOptions));
+app.use(corsMiddleware);
 app.use(express.json());
 
 // Connect to MongoDB
