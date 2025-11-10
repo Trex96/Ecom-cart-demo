@@ -9,8 +9,21 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS configuration using environment variables
+const allowedOrigins = [
+  'http://localhost:5173', // Vite dev server
+  'http://localhost:3000', // Alternative local dev
+  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : []),
+];
+const corsOrigins = allowedOrigins.filter(origin => origin && origin.trim() !== '');
+
+const corsOptions = {
+  origin: corsOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connect to MongoDB
