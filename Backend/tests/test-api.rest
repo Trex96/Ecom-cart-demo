@@ -1,0 +1,64 @@
+# Vibe Commerce API Tests
+
+@baseUrl = http://localhost:3000/api
+@userId = guest-user
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Get all products
+GET {{baseUrl}}/products
+
+### Get external products
+GET {{baseUrl}}/products/external
+
+### Get cart
+GET {{baseUrl}}/cart?userId={{userId}}
+
+### Add item to cart
+POST {{baseUrl}}/cart
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "productId": "605c69d0f10d7e3ac8d5e1f1",
+  "quantity": 2
+}
+
+### Update cart item
+PUT {{baseUrl}}/cart/ITEM_ID_HERE
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "quantity": 3
+}
+
+### Remove item from cart
+DELETE {{baseUrl}}/cart/ITEM_ID_HERE
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+### Clear cart
+DELETE {{baseUrl}}/cart
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+### Process checkout
+POST {{baseUrl}}/checkout
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "customerName": "John Doe",
+  "customerEmail": "john.doe@example.com"
+}
+
+### Get order by ID
+GET {{baseUrl}}/orders/ORDER_ID_HERE
