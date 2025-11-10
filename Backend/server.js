@@ -42,8 +42,8 @@ const corsOptions = {
     
     console.log('Allowed origins:', allowedOrigins); // Debug log
     
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
+    // Check if origin is in allowed list or is a Vercel domain
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       console.log('Origin allowed:', origin);
       callback(null, true);
     } else {
