@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://ecom-cart-demo-git-master-new-suns-projects.vercel.app/api/$1"
+      "dest": "https://ecom-cart-demo.vercel.app/api"
     },
     {
       "src": "/assets/(.*)",
