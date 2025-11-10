@@ -89,6 +89,13 @@ const products = [
 
 const seedProducts = async () => {
   try {
+    // Only run seeding if not in production or if explicitly requested
+    if (process.env.NODE_ENV === 'production' && !process.env.FORCE_SEED) {
+      console.log('Skipping seed in production environment');
+      process.exit(0);
+      return;
+    }
+
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -102,11 +109,16 @@ const seedProducts = async () => {
     await Product.insertMany(products);
     console.log('Products seeded successfully');
 
-    process.exit();
+    process.exit(0);
   } catch (error) {
     console.error('Error seeding products:', error);
     process.exit(1);
   }
 };
 
-seedProducts();
+// Only run seeding if this file is executed directly
+if (require.main === module) {
+  seedProducts();
+}
+
+module.exports = seedProducts;
