@@ -9,13 +9,25 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// Simplified CORS configuration using environment variables
+// CORS configuration allowing all Vercel domains
 const corsOptions = {
-  origin: [
-    'http://localhost:5173', // Vite dev server
-    'http://localhost:3000', // Alternative local dev
-    ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
-  ].filter(origin => origin && origin !== ''),
+  origin: function (origin, callback) {
+
+    if (!origin) return callback(null, true);
+    
+
+    const allowedOrigins = [
+      'http://localhost:5173', // Vite dev server
+      'http://localhost:3000', // Alternative local dev
+      ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
+    ];
+    
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
