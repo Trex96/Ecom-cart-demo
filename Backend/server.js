@@ -9,30 +9,12 @@ dotenv.config({ path: './.env' });
 
 const app = express();
 
-// CORS configuration allowing all Vercel domains
-const corsOptions = {
-  origin: function (origin, callback) {
+// Simple and permissive CORS configuration for debugging
+app.use(cors({
+  origin: true, // Reflect the request origin
+  credentials: true
+}));
 
-    if (!origin) return callback(null, true);
-    
-
-    const allowedOrigins = [
-      'http://localhost:5173', // Vite dev server
-      'http://localhost:3000', // Alternative local dev
-      ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim()) : []),
-    ];
-    
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connect to MongoDB
